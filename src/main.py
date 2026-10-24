@@ -1,8 +1,13 @@
+from datetime import datetime, timedelta, timezone
+
 import flet as ft
 import httpx
-from sizing import size_system
+
+from analysis import analyse_reports
+from sizing import size_battery, size_system
 
 API_URL = "https://6adcce31fa5e73d4ab2db866.mockapi.io/outage_report"
+SAST = timezone(timedelta(hours=2))
 
 
 def main(page: ft.Page):
@@ -55,6 +60,51 @@ def main(page: ft.Page):
     report_msg = ft.Text("")
     reports_list = ft.Column()
 
+    # ---------- Outage insights ----------
+    load_input = ft.TextField(
+        label="Your essential load in kW (for example 0.8)",
+        value="0.8",
+        keyboard_type=ft.KeyboardType.NUMBER,
+    )
+    insights = ft.Text("")
+
+    def show_insights(data):
+        now_hour = datetime.now(SAST).hour
+        s = analyse_reports(data, now_hour)
+        if not s["enough_data"]:
+            insights.value = (
+                f"Not enough reports yet ({s['count']} of {s['needed']} needed)."
+            )
+            return
+
+        try:
+            load_kw = float(load_input.value)
+            battery_kwh = size_battery(load_kw, s["backup_hours"])
+            battery_line = (
+                f"Suggested battery for {load_kw} kW: about {battery_kwh} kWh "
+                f"({s['backup_hours']} h backup)"
+            )
+        except ValueError:
+            battery_line = (
+                "Enter your essential load in kW (for example 0.8) "
+                "to get a battery estimate."
+            )
+
+        peak = s["peak_hour"]
+        hours = ", ".join(f"{h:02d}:00" for h in s["top_hours"])
+        insights.value = (
+            f"Based on {s['count']} reports (includes sample data):\n"
+            f"Most outages start around {peak:02d}:00 ({s['peak_count']} reports)\n"
+            f"Busiest hours: {hours}\n"
+            f"Most affected area: {s['worst_suburb']} "
+            f"({s['worst_count']} reports, about {s['worst_avg']} min each)\n"
+            f"Typical outage: about {s['avg_duration']} min "
+            f"(most last under {s['p80']} min)\n"
+            f"Next likely window: {s['next_day']} around "
+            f"{peak:02d}:00-{(peak + 1) % 24:02d}:00 (estimate)\n"
+            f"{battery_line}"
+        )
+
     def load_reports():
         reports_list.controls.clear()
         try:
@@ -66,6 +116,7 @@ def main(page: ft.Page):
             reports_list.controls.append(
                 ft.Text(f"Could not load: {ex}", color=ft.Colors.RED)
             )
+            insights.value = ""
             page.update()
             return
 
@@ -78,6 +129,7 @@ def main(page: ft.Page):
                     f"{item.get('duration_mins')} min"
                 )
             )
+        show_insights(data)
         page.update()
 
     def submit_report(e):
@@ -142,6 +194,12 @@ def main(page: ft.Page):
         report_msg,
         ft.Text("Latest reports", size=16, weight=ft.FontWeight.BOLD),
         reports_list,
+        ft.Divider(),
+        ft.Text("Outage insights", size=20, weight=ft.FontWeight.BOLD),
+        load_input,
+        ft.Button("Update insights", on_click=lambda e: load_reports()),
+        insights,
+        ft.Text("Insights are estimates based on reported outages.", size=12),
     )
     load_reports()
 
