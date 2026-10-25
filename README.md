@@ -26,3 +26,7 @@ Python, Flet, httpx, MockAPI (JSON)
 
 ## Team
 Ndzilo Group (Pty) Ltd, eMalahleni, Mpumalanga
+
+## Live demo
+https://ndzilo-energy-portal-1.onrender.com
+(Free hosting: the first load can take about a minute to wake up.)
