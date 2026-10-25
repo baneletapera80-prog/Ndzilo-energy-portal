@@ -164,7 +164,7 @@ def main(page: ft.Page):
         results_box.controls.append(ft.ResponsiveRow(tiles, spacing=10, run_spacing=10))
         results_box.controls.append(
             ft.Text("Estimates only, based on standard assumptions. "
-                    "Get a quote from an installer.", size=12, color=MUTED)
+                    "Not guaranteed. Get a quote from a registered installer.", size=12, color=MUTED)
         )
         page.update()
 
@@ -205,12 +205,12 @@ def main(page: ft.Page):
         tiles = [
             tile(ft.Icons.SCHEDULE, "Peak outage hour", f"{peak:02d}:00",
                  "#FEF3C7", "#B45309", f"{s['peak_count']} reports"),
-            tile(ft.Icons.LOCATION_ON, "Most affected area", s["worst_suburb"],
+            tile(ft.Icons.LOCATION_ON, "Worst area", s["worst_suburb"],
                  "#FEE2E2", RED, f"{s['worst_count']} reports, about {s['worst_avg']} min",
                  size=15),
             tile(ft.Icons.TIMER, "Typical outage", f"{s['avg_duration']} min",
                  "#EDE9FE", "#6D28D9", f"Most last under {s['p80']} min"),
-            tile(ft.Icons.POWER_OFF, "Next likely window",
+            tile(ft.Icons.POWER_OFF, "Next outage",
                  f"{s['next_day'].capitalize()} {peak:02d}:00",
                  "#DCFCE7", "#15803D", "Estimate from past reports", size=18),
         ]
@@ -333,7 +333,36 @@ def main(page: ft.Page):
     )
 
     # ---------- Page layout ----------
-    body = ft.Column([hero, calc_card, report_card, insights_card], spacing=16)
+    
+    about_card = card(
+        [
+            heading(ft.Icons.INFO, "How the estimates work"),
+            ft.Text(
+                "Assumptions: electricity R3.10 per kWh, 125 kWh generated per kWp "
+                "per month, 60% of use in daylight, 85% of solar used on site, "
+                "install cost R13,750 per kWp (no battery).",
+                size=13, color=MUTED),
+            ft.Text(
+                "Estimated savings are not guaranteed. Real results depend on your "
+                "tariff, usage, roof, weather and installer quote.",
+                size=13, color=MUTED),
+            ft.Text(
+                "Ndzilo does not design, install or approve systems. Grid-connected "
+                "solar must be installed by a registered professional and approved "
+                "by your municipality or utility before you connect.",
+                size=13, color=MUTED),
+            ft.Text(
+                "Data: your inputs and the outage reports you submit are saved to a "
+                "prototype database (MockAPI). The first 24 outage reports are "
+                "sample data.",
+                size=13, color=MUTED),
+        ]
+    )
+   
+   
+   
+    body = ft.Column(
+        [hero, calc_card, report_card, insights_card, about_card], spacing=16)
     page.add(
         ft.ResponsiveRow(
             [ft.Container(content=body, col={"xs": 12, "md": 10, "lg": 8})],
