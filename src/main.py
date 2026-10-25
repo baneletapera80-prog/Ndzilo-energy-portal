@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import flet as ft
 import httpx
+import os
 
 from analysis import analyse_reports
 from sizing import size_battery, size_system
@@ -204,4 +205,10 @@ def main(page: ft.Page):
     load_reports()
 
 
-ft.run(main)
+if __name__ == "__main__":
+    ft.run(
+        main,
+        view=ft.AppView.WEB_BROWSER,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8000")),
+    )
